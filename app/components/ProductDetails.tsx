@@ -3,16 +3,18 @@
 import { useState } from "react";
 
 type ProductDetailsProps = {
-  product: any;
-  onClose: () => void;
-  onSave: (product: any) => void;
-};
-
-export default function ProductDetails({
-  product,
-  onClose,
-  onSave,
-}: ProductDetailsProps) {
+    product: any;
+    onClose: () => void;
+    onSave: (product: any) => void;
+    onDelete: () => void;
+  };
+  
+  export default function ProductDetails({
+    product,
+    onClose,
+    onSave,
+    onDelete,
+  }: ProductDetailsProps) {
   const [name, setName] = useState(product.name || "");
   const [imageUrl, setImageUrl] = useState(product.image_url || "");
   const [productCost, setProductCost] = useState(product.product_cost || 0);
@@ -122,6 +124,13 @@ export default function ProductDetails({
             >
               Закрыть
             </button>
+
+            <button
+  onClick={onDelete}
+  className="rounded-full bg-red-50 px-4 py-2 text-sm text-red-600 hover:bg-red-100"
+>
+  Удалить
+</button>
 
             <button
               onClick={handleSave}

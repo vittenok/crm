@@ -504,10 +504,37 @@ export default function Home() {
   />
 )}
       {selectedProduct && (
-        <ProductDetails
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onSave={async (updatedProduct) => {
+       <ProductDetails
+       product={selectedProduct}
+       onClose={() => setSelectedProduct(null)}
+     
+       onDelete={async () => {
+         const confirmed = confirm(
+           "Удалить товар и все его размеры/макеты?"
+         );
+     
+         if (!confirmed) return;
+     
+         const { error } = await supabase
+           .from("products")
+           .delete()
+           .eq("id", selectedProduct.id);
+     
+         if (error) {
+           console.error("Ошибка удаления товара:", error);
+           return;
+         }
+     
+         setProducts((currentProducts) =>
+           currentProducts.filter(
+             (product) => product.id !== selectedProduct.id
+           )
+         );
+     
+         setSelectedProduct(null);
+       }}
+     
+       onSave={async (updatedProduct) => {
             const { error: productError } = await supabase
               .from("products")
               .update({
