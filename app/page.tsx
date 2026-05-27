@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import OrderCard from "./components/OrderCard";
 import OrderDetails from "./components/OrderDetails";
 import CreateOrderModal from "./components/CreateOrderModal";
+import CreateProductModal from "./components/CreateProductModal";
 import ProductDetails from "./components/ProductDetails";
 
 import { supabase } from "./lib/supabase";
@@ -29,6 +30,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
 
   useEffect(() => {
     async function loadProducts() {
@@ -256,6 +258,15 @@ export default function Home() {
               : "Готовый список макетов для передачи в печать"}
           </p>
 
+          {section === "products" && (
+  <button
+    onClick={() => setIsCreateProductOpen(true)}
+    className="mt-5 rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800"
+  >
+    + Новый товар
+  </button>
+)}
+
           {section === "orders" && (
             <button
               onClick={() => setIsCreateOpen(true)}
@@ -466,7 +477,32 @@ export default function Home() {
           }}
         />
       )}
+{isCreateProductOpen && (
+  <CreateProductModal
+    onClose={() => setIsCreateProductOpen(false)}
+    onCreate={async (newProduct) => {
+      const { data, error } = await supabase
+        .from("products")
+        .insert({
+          name: newProduct.name,
+          image_url: newProduct.image_url,
+          product_cost: newProduct.product_cost,
+          print_cost: newProduct.print_cost,
+          packaging_cost: newProduct.packaging_cost,
+        })
+        .select("*, product_sizes(*, product_print_files(*))")
+        .single();
 
+      if (error) {
+        console.error("Ошибка создания товара:", error);
+        return;
+      }
+
+      setProducts((currentProducts) => [data, ...currentProducts]);
+      setIsCreateProductOpen(false);
+    }}
+  />
+)}
       {selectedProduct && (
         <ProductDetails
           product={selectedProduct}
