@@ -120,7 +120,35 @@ const statuses = [
                 {contactLabel}
               </a>
             )}
-  
+  {(order.phone || order.address) && (
+  <div className="mt-3 rounded-2xl bg-zinc-100 p-3 text-xs text-zinc-600">
+    <p className="mb-2 font-semibold text-black">Доставка</p>
+
+    {order.phone && (
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          navigator.clipboard.writeText(order.phone);
+        }}
+        className="mb-2 block w-full rounded-xl bg-white px-3 py-2 text-left hover:bg-zinc-50"
+      >
+        Телефон: {order.phone}
+      </button>
+    )}
+
+    {order.address && (
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          navigator.clipboard.writeText(order.address);
+        }}
+        className="block w-full rounded-xl bg-white px-3 py-2 text-left hover:bg-zinc-50"
+      >
+        Адрес: {order.address}
+      </button>
+    )}
+  </div>
+)}
             <p className="mt-1 text-xs text-zinc-400">
               Дедлайн: {order.deadline}
             </p>
