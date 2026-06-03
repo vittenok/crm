@@ -31,6 +31,20 @@ function extractSize(value: string) {
   return match ? match[1].trim() : "";
 }
 
+function extractTildaVariantCode(value: string) {
+    const match = value.match(/\(([^,\s)]+)/);
+    return match ? match[1].trim() : "";
+  }
+  
+  function splitTildaVariantCode(code: string) {
+    const match = code.match(/^(\d+)([A-Za-zА-Яа-я0-9]+)$/);
+  
+    return {
+      productUid: match ? match[1] : code,
+      size: match ? match[2] : "",
+    };
+  }
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -44,7 +58,12 @@ export async function POST(request: Request) {
     const productLine = payment?.products?.[0] || "";
 
     const productName = cleanProductText(productLine);
-    const size = extractSize(productLine);
+
+    const tildaVariantCode = extractTildaVariantCode(productLine);
+    const parsedVariant = splitTildaVariantCode(tildaVariantCode);
+    
+    const productUid = parsedVariant.productUid;
+    const size = parsedVariant.size || extractSize(productLine);
 
     const salePrice = Number(payment?.amount || 0);
     const tildaOrderId = payment?.orderid || `tilda-${Date.now()}`;
@@ -97,7 +116,7 @@ export async function POST(request: Request) {
     const { data: product } = await supabase
       .from("products")
       .select("*, product_sizes(*)")
-      .eq("name", productName)
+      .eq("tilda_product_uid", productUid)
       .maybeSingle();
 
     const productSize = product?.product_sizes?.find(
