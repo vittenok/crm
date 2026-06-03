@@ -18,12 +18,36 @@ function normalizeTelegram(value: string) {
   return value.replace("@", "").trim();
 }
 
+function cleanProductText(value: string) {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/^"/, "")
+    .replace(/".*$/, "")
+    .trim();
+}
+
+function extractSize(value: string) {
+  const match = value.match(/Размер:\s*([^)]+)/i);
+  return match ? match[1].trim() : "";
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const rawData = Object.fromEntries(formData.entries());
 
     console.log("Tilda webhook:", rawData);
+
+    const paymentRaw = getValue(rawData, ["payment"]);
+    const payment = paymentRaw ? JSON.parse(paymentRaw) : {};
+
+    const productLine = payment?.products?.[0] || "";
+
+    const productName = cleanProductText(productLine);
+    const size = extractSize(productLine);
+
+    const salePrice = Number(payment?.amount || 0);
+    const tildaOrderId = payment?.orderid || `tilda-${Date.now()}`;
 
     const name = getValue(rawData, [
       "Name",
@@ -37,7 +61,6 @@ export async function POST(request: Request) {
       "Phone",
       "phone",
       "Телефон",
-      "Номер телефона",
     ]);
 
     const email = getValue(rawData, [
@@ -48,38 +71,48 @@ export async function POST(request: Request) {
     ]);
 
     const telegram = getValue(rawData, [
+      "Input",
       "Telegram",
       "telegram",
       "Телеграм",
-      "Ник в Telegram",
       "Ник Telegram",
       "TG",
       "tg",
     ]);
 
-    const productName = getValue(rawData, [
-      "Product",
-      "product",
-      "Товар",
-      "Название товара",
-      "payment.products",
+    const delivery = getValue(rawData, [
+      "Radio",
+      "Delivery",
+      "Доставка",
     ]);
 
-    const salePriceRaw = getValue(rawData, [
-      "payment.amount",
-      "amount",
-      "Цена",
-      "Стоимость",
-      "Сумма",
+    const address = getValue(rawData, [
+      "Textarea",
+      "Address",
+      "Адрес",
+      "Адрес доставки",
+      "ПВЗ",
     ]);
 
-    const salePrice = Number(
-      salePriceRaw.replace(/[^\d.]/g, "")
+    const { data: product } = await supabase
+      .from("products")
+      .select("*, product_sizes(*)")
+      .eq("name", productName)
+      .maybeSingle();
+
+    const productSize = product?.product_sizes?.find(
+      (item: any) => item.size === size
     );
 
-    const tildaOrderId =
-      getValue(rawData, ["requestid", "request_id", "tranid", "orderid"]) ||
-      `tilda-${Date.now()}`;
+    const productCost = product?.product_cost || 0;
+    const printCost = product?.print_cost || 0;
+    const packagingCost = product?.packaging_cost || 0;
+
+    const profit =
+      salePrice -
+      productCost -
+      printCost -
+      packagingCost;
 
     const { error } = await supabase.from("orders").insert({
       tilda_order_id: tildaOrderId,
@@ -92,18 +125,23 @@ export async function POST(request: Request) {
       contact_value: telegram,
       telegram_username: normalizeTelegram(telegram),
 
+      product_id: product?.id || null,
+      product_size_id: productSize?.id || null,
       product_name: productName || "Заказ из Тильды",
+
+      image_url: product?.image_url || "",
 
       status: "Новый",
       priority: "Обычный",
 
-      delivery_service: "Не указана",
+      delivery_service: delivery || "Не указана",
+      address,
 
-      sale_price: Number.isNaN(salePrice) ? 0 : salePrice,
-      product_cost: 0,
-      print_cost: 0,
-      packaging_cost: 0,
-      profit: Number.isNaN(salePrice) ? 0 : salePrice,
+      sale_price: salePrice,
+      product_cost: productCost,
+      print_cost: printCost,
+      packaging_cost: packagingCost,
+      profit,
 
       comment: JSON.stringify(rawData, null, 2),
     });

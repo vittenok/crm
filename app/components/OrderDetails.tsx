@@ -310,7 +310,7 @@ export default function OrderDetails({
 
             <div className="space-y-4 text-sm">
               <p>Служба доставки: {order.deliveryService || "Не указана"}</p>
-
+              <p>Адрес: {order.address || "Не указан"}</p>
               <label>
                 <span className="mb-2 block text-zinc-500">Трек-номер</span>
 
