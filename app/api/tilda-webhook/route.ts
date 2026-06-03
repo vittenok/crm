@@ -119,9 +119,12 @@ export async function POST(request: Request) {
       .eq("tilda_product_uid", productUid)
       .maybeSingle();
 
-    const productSize = product?.product_sizes?.find(
-      (item: any) => item.size === size
-    );
+      const normalizedSize = size.trim().toLowerCase();
+
+      const productSize = product?.product_sizes?.find(
+        (item: any) =>
+          String(item.size || "").trim().toLowerCase() === normalizedSize
+      );
 
     const productCost = product?.product_cost || 0;
     const printCost = product?.print_cost || 0;
