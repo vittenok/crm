@@ -66,8 +66,10 @@ export async function POST(request: Request) {
     const tildaVariantCode = extractTildaVariantCode(productLine);
     const parsedVariant = splitTildaVariantCode(tildaVariantCode);
 
-    const productUid = parsedVariant.productUid;
-    const size = parsedVariant.size || extractSize(productLine);
+    const sizeFromText = extractSize(productLine);
+const size = sizeFromText || parsedVariant.size;
+
+const productUid = tildaVariantCode.replace(size, "");
 
     const salePrice = Number(payment?.amount || 0);
     const tildaOrderId = payment?.orderid || `tilda-${Date.now()}`;
