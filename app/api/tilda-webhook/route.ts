@@ -32,18 +32,22 @@ function extractSize(value: string) {
 }
 
 function extractTildaVariantCode(value: string) {
-    const match = value.match(/\(([^,\s)]+)/);
-    return match ? match[1].trim() : "";
-  }
-  
-  function splitTildaVariantCode(code: string) {
-    const match = code.match(/^(\d+)([A-Za-zА-Яа-я0-9]+)$/);
-  
-    return {
-      productUid: match ? match[1] : code,
-      size: match ? match[2] : "",
-    };
-  }
+  const match = value.match(/\(([^,\s)]+)/);
+  return match ? match[1].trim() : "";
+}
+
+function splitTildaVariantCode(code: string) {
+  const match = code.match(/^(\d+)([A-Za-zА-Яа-я0-9]+)$/);
+
+  return {
+    productUid: match ? match[1] : code,
+    size: match ? match[2] : "",
+  };
+}
+
+function normalizeSize(value: string) {
+  return value.trim().toLowerCase();
+}
 
 export async function POST(request: Request) {
   try {
@@ -61,7 +65,7 @@ export async function POST(request: Request) {
 
     const tildaVariantCode = extractTildaVariantCode(productLine);
     const parsedVariant = splitTildaVariantCode(tildaVariantCode);
-    
+
     const productUid = parsedVariant.productUid;
     const size = parsedVariant.size || extractSize(productLine);
 
@@ -113,28 +117,27 @@ export async function POST(request: Request) {
       "ПВЗ",
     ]);
 
-    const { data: product } = await supabase
+    const { data: product, error: productError } = await supabase
       .from("products")
       .select("*, product_sizes(*)")
       .eq("tilda_product_uid", productUid)
       .maybeSingle();
 
-      const normalizedSize = size.trim().toLowerCase();
+    if (productError) {
+      console.error("Tilda product search error:", productError);
+    }
 
-      const productSize = product?.product_sizes?.find(
-        (item: any) =>
-          String(item.size || "").trim().toLowerCase() === normalizedSize
-      );
+    const normalizedSize = normalizeSize(size);
+
+    const productSize = product?.product_sizes?.find(
+      (item: any) => normalizeSize(String(item.size || "")) === normalizedSize
+    );
 
     const productCost = product?.product_cost || 0;
     const printCost = product?.print_cost || 0;
     const packagingCost = product?.packaging_cost || 0;
 
-    const profit =
-      salePrice -
-      productCost -
-      printCost -
-      packagingCost;
+    const profit = salePrice - productCost - printCost - packagingCost;
 
     const { error } = await supabase.from("orders").insert({
       tilda_order_id: tildaOrderId,
@@ -149,7 +152,8 @@ export async function POST(request: Request) {
 
       product_id: product?.id || null,
       product_size_id: productSize?.id || null,
-      product_name: productName || "Заказ из Тильды",
+      product_name: product?.name || productName || "Заказ из Тильды",
+      size,
 
       image_url: product?.image_url || "",
 
@@ -165,7 +169,24 @@ export async function POST(request: Request) {
       packaging_cost: packagingCost,
       profit,
 
-      comment: JSON.stringify(rawData, null, 2),
+      comment: JSON.stringify(
+        {
+          parsed: {
+            productLine,
+            productName,
+            tildaVariantCode,
+            productUid,
+            size,
+            normalizedSize,
+            productFound: Boolean(product),
+            productSizeFound: Boolean(productSize),
+            productSizes: product?.product_sizes || [],
+          },
+          rawData,
+        },
+        null,
+        2
+      ),
     });
 
     if (error) {
