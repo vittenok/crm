@@ -113,6 +113,21 @@ type ProductDetailsProps = {
     );
   }
 
+  function removeSize(sizeIndex: number) {
+    const confirmed = confirm(
+      "Удалить размер и все его макеты?"
+    );
+  
+    if (!confirmed) return;
+  
+    setSizes((currentSizes: any[]) =>
+      currentSizes.filter(
+        (_: any, currentSizeIndex: number) =>
+          currentSizeIndex !== sizeIndex
+      )
+    );
+  }
+
   function handleSave() {
     onSave({
       ...product,
@@ -293,6 +308,13 @@ type ProductDetailsProps = {
                     + Макет
                   </button>
                 </div>
+
+                <button
+  onClick={() => removeSize(sizeIndex)}
+  className="rounded-full bg-red-50 px-4 py-3 text-sm text-red-600 hover:bg-red-100"
+>
+  Удалить размер
+</button>
 
                 <div className="space-y-3">
                   {(sizeItem.product_print_files || []).length === 0 && (
