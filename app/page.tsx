@@ -535,16 +535,17 @@ export default function Home() {
        }}
      
        onSave={async (updatedProduct) => {
-            const { error: productError } = await supabase
-              .from("products")
-              .update({
-                name: updatedProduct.name,
-                image_url: updatedProduct.image_url,
-                product_cost: updatedProduct.product_cost,
-                print_cost: updatedProduct.print_cost,
-                packaging_cost: updatedProduct.packaging_cost,
-              })
-              .eq("id", updatedProduct.id);
+        const { error: productError } = await supabase
+        .from("products")
+        .update({
+          name: updatedProduct.name,
+          image_url: updatedProduct.image_url,
+          tilda_product_uid: updatedProduct.tilda_product_uid,
+          product_cost: updatedProduct.product_cost,
+          print_cost: updatedProduct.print_cost,
+          packaging_cost: updatedProduct.packaging_cost,
+        })
+        .eq("id", updatedProduct.id);
 
             if (productError) {
               console.error("Ошибка обновления товара:", productError);

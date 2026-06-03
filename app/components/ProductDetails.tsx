@@ -22,6 +22,9 @@ type ProductDetailsProps = {
   const [packagingCost, setPackagingCost] = useState(
     product.packaging_cost || 0
   );
+  const [tildaProductUid, setTildaProductUid] = useState(
+    product.tilda_product_uid || ""
+  );
 
   const [sizes, setSizes] = useState(product.product_sizes || []);
 
@@ -99,12 +102,13 @@ type ProductDetailsProps = {
       ...product,
       name,
       image_url: imageUrl,
+      tilda_product_uid: tildaProductUid,
       product_cost: Number(productCost),
       print_cost: Number(printCost),
       packaging_cost: Number(packagingCost),
       product_sizes: sizes,
     });
-
+  
     onClose();
   }
 
@@ -171,6 +175,23 @@ type ProductDetailsProps = {
               className="w-full rounded-2xl border border-zinc-200 px-4 py-3 outline-none focus:border-black"
             />
           </div>
+
+          <div className="md:col-span-2">
+  <p className="mb-2 text-sm font-medium text-zinc-500">
+    ID товара в Тильде
+  </p>
+
+  <input
+    value={tildaProductUid}
+    onChange={(event) => setTildaProductUid(event.target.value)}
+    placeholder="Например 3331"
+    className="w-full rounded-2xl border border-zinc-200 px-4 py-3 outline-none focus:border-black"
+  />
+
+  <p className="mt-2 text-xs text-zinc-400">
+    Берём из строки Тильды: (3331XS, Размер: XS)
+  </p>
+</div>
 
           <div>
             <p className="mb-2 text-sm font-medium text-zinc-500">
