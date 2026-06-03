@@ -585,7 +585,28 @@ export default function Home() {
                   console.error("Ошибка обновления размера:", error);
                 }
               }
-
+              const originalSize = selectedProduct.product_sizes?.find(
+                (original: any) => original.id === sizeItem.id
+              );
+              
+              const currentFileIds = (sizeItem.product_print_files || [])
+                .filter((file: any) => !String(file.id).startsWith("new-file-"))
+                .map((file: any) => file.id);
+              
+              const filesToDelete = (originalSize?.product_print_files || []).filter(
+                (file: any) => !currentFileIds.includes(file.id)
+              );
+              
+              for (const fileToDelete of filesToDelete) {
+                const { error } = await supabase
+                  .from("product_print_files")
+                  .delete()
+                  .eq("id", fileToDelete.id);
+              
+                if (error) {
+                  console.error("Ошибка удаления макета:", error);
+                }
+              }
               const printFiles = sizeItem.product_print_files || [];
 
               for (const file of printFiles) {
