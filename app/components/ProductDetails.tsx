@@ -97,6 +97,22 @@ type ProductDetailsProps = {
     );
   }
 
+  function removePrintFile(sizeIndex: number, fileIndex: number) {
+    setSizes((currentSizes: any[]) =>
+      currentSizes.map((size, index) => {
+        if (index !== sizeIndex) return size;
+  
+        return {
+          ...size,
+          product_print_files: size.product_print_files.filter(
+            (_: any, currentFileIndex: number) =>
+              currentFileIndex !== fileIndex
+          ),
+        };
+      })
+    );
+  }
+
   function handleSave() {
     onSave({
       ...product,
@@ -287,10 +303,20 @@ type ProductDetailsProps = {
 
                   {(sizeItem.product_print_files || []).map(
                     (file: any, fileIndex: number) => (
-                      <div
+                        <div
                         key={file.id}
-                        className="grid gap-3 rounded-2xl bg-zinc-100 p-4 md:grid-cols-2"
+                        className="rounded-2xl bg-zinc-100 p-4"
                       >
+                        <div className="mb-4 flex justify-end">
+                          <button
+                            onClick={() => removePrintFile(sizeIndex, fileIndex)}
+                            className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600 hover:bg-red-100"
+                          >
+                            Удалить макет
+                          </button>
+                        </div>
+                      
+                        <div className="grid gap-3 md:grid-cols-2">
                         <div>
                           <p className="mb-2 text-sm font-medium text-zinc-500">
                             Название файла
@@ -366,6 +392,7 @@ type ProductDetailsProps = {
                             className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 outline-none focus:border-black"
                           />
                         </div>
+                      </div>
                       </div>
                     )
                   )}
