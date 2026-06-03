@@ -553,7 +553,33 @@ export default function Home() {
             }
 
             const sizesToSave = updatedProduct.product_sizes || [];
-
+            const currentSizeIds = sizesToSave
+            .filter((sizeItem: any) => !String(sizeItem.id).startsWith("new-size-"))
+            .map((sizeItem: any) => sizeItem.id);
+          
+          const sizesToDelete = (selectedProduct.product_sizes || []).filter(
+            (sizeItem: any) => !currentSizeIds.includes(sizeItem.id)
+          );
+          
+          for (const sizeToDelete of sizesToDelete) {
+            const { error: printFilesDeleteError } = await supabase
+              .from("product_print_files")
+              .delete()
+              .eq("product_size_id", sizeToDelete.id);
+          
+            if (printFilesDeleteError) {
+              console.error("Ошибка удаления макетов размера:", printFilesDeleteError);
+            }
+          
+            const { error: sizeDeleteError } = await supabase
+              .from("product_sizes")
+              .delete()
+              .eq("id", sizeToDelete.id);
+          
+            if (sizeDeleteError) {
+              console.error("Ошибка удаления размера:", sizeDeleteError);
+            }
+          }
             for (const sizeItem of sizesToSave) {
               let sizeId = sizeItem.id;
 
